@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Gieo Quẻ Đầu Năm – Vietschool</title>
+
+<style>
+body{
+    margin:0;
+    font-family:"Segoe UI",Tahoma,sans-serif;
+    background:url("background-tet.png") no-repeat center center fixed;
+    background-size:cover;
+    color:#fff;
+}
+header{
+    text-align:center;
+    padding:20px;
+    background:rgba(0,0,0,0.4);
+}
+header img{width:90px}
+.container{
+    max-width:950px;
+    margin:30px auto;
+    background:rgba(0,0,0,0.5);
+    border-radius:16px;
+    padding:25px;
+}
+input,select,button{
+    width:100%;
+    padding:10px;
+    margin-top:8px;
+    border-radius:8px;
+    border:none;
+}
+button{
+    background:#ffd700;
+    font-weight:bold;
+    cursor:pointer;
+}
+button:disabled{
+    background:#ccc;
+    cursor:not-allowed;
+}
+.fortune-box{
+    width:180px;
+    margin:20px auto;
+}
+.fortune-box img{width:100%}
+.results li{
+    background:rgba(255,255,255,.2);
+    margin-bottom:8px;
+    padding:10px;
+    border-radius:6px;
+}
+
+/* ===== POPUP QUẺ ===== */
+.overlay{
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.85);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    z-index:999;
+    pointer-events:none;          /* 🔑 FIX CHẶN CLICK */
+}
+.overlay.show{
+    display:flex;
+    pointer-events:auto;
+}
+.popup{
+    background:#fff;
+    color:#8b0000;
+    padding:30px;
+    border-radius:16px;
+    max-width:600px;
+    text-align:center;
+}
+.popup p{
+    font-size:22px;
+}
+
+/* ===== PHÁO HOA ===== */
+.firework{
+    position:fixed;
+    width:12px;
+    height:12px;
+    background:gold;
+    border-radius:50%;
+    animation:boom 1s forwards;
+}
+@keyframes boom{
+    to{
+        transform:translateY(-200px) scale(2);
+        opacity:0;
+    }
+}
+
+/* ===== GV ===== */
+table{
+    background:#fff;
+    color:#000;
+    width:100%;
+    border-collapse:collapse;
+}
+th,td{
+    padding:6px;
+    border:1px solid #ccc;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+<img src="logo-vietschool.png">
+<h2>Trường Liên cấp THCS – Tiểu học Vietschool Pandora</h2>
+</header>
+
+<div class="container">
+
+<!-- ===== LOGIN HS ===== -->
+<div id="login">
+    <h3>🎊 Đăng nhập gieo quẻ đầu năm 🎊</h3>
+    <input id="name" placeholder="Họ và tên">
+    <select id="class">
+        <option value="">Chọn lớp</option>
+        <option>8V1</option>
+        <option>8V2</option>
+        <option>9V1</option>
+    </select>
+    <button id="loginBtn">Vào gieo quẻ</button>
+</div>
+
+<!-- ===== HỌC SINH ===== -->
+<div id="main" style="display:none">
+    <p>
+        👧 <b id="stuName"></b> – 🏫 <b id="stuClass"></b><br>
+        🌸 <i id="wish"></i>
+    </p>
+
+    <div class="fortune-box">
+        <img src="hop-que.png">
+    </div>
+
+    <button id="drawBtn">🎴 Gieo quẻ</button>
+
+    <ul class="results" id="results"></ul>
+    <div id="submit" style="text-align:center;margin-top:15px"></div>
+</div>
+
+<hr>
+
+<!-- ===== GIÁO VIÊN ===== -->
+<button id="gvBtn">🔐 Chế độ Giáo viên</button>
+
+<div id="gvPanel" style="display:none;margin-top:15px">
+    <h3>📋 Danh sách học sinh đã gieo quẻ</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Họ tên</th>
+                <th>Lớp</th>
+                <th>Quẻ 1</th>
+                <th>Quẻ 2</th>
+                <th>Quẻ 3</th>
+            </tr>
+        </thead>
+        <tbody id="gvTable"></tbody>
+    </table>
+</div>
+
+</div>
+
+<!-- ===== POPUP ===== -->
+<div class="overlay" id="overlay">
+    <div class="popup">
+        <h2 id="popupTitle"></h2>
+        <p id="popupText"></p>
+        <button onclick="closePopup()">Đóng quẻ</button>
+    </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded",()=>{
+
+const MUST="Viết một bức thư gửi một người thân trong dịp Tết, kể về một điều con biết ơn hoặc một kỷ niệm đáng nhớ.";
+
+const fortunes=[
+"Chúc Tết ông bà bằng lời nói hoặc viết tay",
+"Giúp bố mẹ dọn dẹp nhà cửa",
+"Viết lời chúc năm mới cho thầy cô",
+"Làm một việc tốt đầu năm",
+"Đọc một cuốn sách trong dịp Tết"
+];
+
+const wishes=[
+"Chúc con năm mới chăm ngoan, học giỏi và nhiều niềm vui 🌸",
+"Chúc con luôn tự tin và không ngừng cố gắng 🌼",
+"Chúc con một năm mới bình an, hạnh phúc 🎊",
+"Chúc con luôn yêu thương và sẻ chia 💖",
+"Chúc con khởi đầu năm mới đầy năng lượng tích cực ✨"
+];
+
+const submitLink="https://docs.google.com/forms/d/e/1FAIpQLSdN-hyzi9o04xdtVcEzaklWbLmihyP0tbbTrmTd4sfLVCiPRA/viewform?usp=dialog";
+
+let drawn=[], userKey="", currentFortune="";
+
+const $=id=>document.getElementById(id);
+
+/* ===== LOGIN ===== */
+$("loginBtn").onclick=()=>{
+    const name=$("name").value.trim();
+    const cls=$("class").value;
+    if(!name||!cls){alert("Vui lòng nhập đủ thông tin");return;}
+    userKey=name+"_"+cls;
+    drawn=JSON.parse(localStorage.getItem(userKey))||[];
+    $("login").style.display="none";
+    $("main").style.display="block";
+    $("stuName").innerText=name;
+    $("stuClass").innerText=cls;
+    $("wish").innerText=wishes[Math.floor(Math.random()*wishes.length)];
+};
+
+/* ===== GIEO QUẺ ===== */
+$("drawBtn").onclick=()=>{
+    if(drawn.length>=3)return;
+
+    if(drawn.length===2 && !drawn.includes(MUST)){
+        currentFortune=MUST;
+    }else{
+        let a=fortunes.filter(x=>!drawn.includes(x));
+        currentFortune=a[Math.floor(Math.random()*a.length)];
+    }
+
+    $("popupTitle").innerText="🔮 Quẻ "+(drawn.length+1);
+    $("popupText").innerText=currentFortune;
+    $("overlay").classList.add("show");
+    firework();
+};
+
+/* ===== ĐÓNG POPUP ===== */
+window.closePopup=()=>{
+    $("overlay").classList.remove("show");
+    drawn.push(currentFortune);
+    localStorage.setItem(userKey,JSON.stringify(drawn));
+    render();
+};
+
+/* ===== HIỂN THỊ SAU 3 QUẺ ===== */
+function render(){
+    if(drawn.length<3)return;
+    $("results").innerHTML="";
+    drawn.forEach((q,i)=>{
+        $("results").innerHTML+=`<li><b>Quẻ ${i+1}:</b> ${q}</li>`;
+    });
+    $("submit").innerHTML=
+    `📎 <a href="${submitLink}" target="_blank" style="color:#ffd700;font-weight:bold">Nộp bài tại đây</a>`;
+    $("drawBtn").disabled=true;
+}
+
+/* ===== PHÁO HOA ===== */
+function firework(){
+    for(let i=0;i<12;i++){
+        const f=document.createElement("div");
+        f.className="firework";
+        f.style.left=Math.random()*innerWidth+"px";
+        f.style.top=innerHeight/2+"px";
+        document.body.appendChild(f);
+        setTimeout(()=>f.remove(),1000);
+    }
+}
+
+/* ===== GV MODE ===== */
+$("gvBtn").onclick=()=>{
+    if(prompt("Mật khẩu giáo viên")!=="vietschool2026"){
+        alert("Sai mật khẩu");
+        return;
+    }
+    $("gvPanel").style.display="block";
+    $("gvTable").innerHTML="";
+    for(let i=0;i<localStorage.length;i++){
+        const k=localStorage.key(i);
+        if(!k.includes("_"))continue;
+        const [n,c]=k.split("_");
+        const d=JSON.parse(localStorage.getItem(k))||[];
+        $("gvTable").innerHTML+=`
+        <tr>
+            <td>${n}</td>
+            <td>${c}</td>
+            <td>${d[0]||""}</td>
+            <td>${d[1]||""}</td>
+            <td>${d[2]||""}</td>
+        </tr>`;
+    }
+};
+
+});
+</script>
+
+</body>
+</html>
